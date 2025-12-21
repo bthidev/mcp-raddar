@@ -5,7 +5,8 @@ from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import Tool, TextContent
 from starlette.applications import Starlette
-from starlette.routing import Route
+from starlette.routing import Route, Mount
+from starlette.responses import Response
 import uvicorn
 
 from .config import load_config, setup_logging
@@ -325,20 +326,20 @@ def main():
     # Create SSE transport
     sse = SseServerTransport("/messages")
 
-    # Create Starlette app with raw ASGI handlers
-    async def handle_sse(scope, receive, send):
-        async with sse.connect_sse(scope, receive, send) as streams:
+    # Create Starlette app with SSE handlers
+    async def handle_sse(request):
+        async with sse.connect_sse(
+            request.scope, request.receive, request._send
+        ) as streams:
             await server.run(
                 streams[0], streams[1], server.create_initialization_options()
             )
-
-    async def handle_messages(scope, receive, send):
-        await sse.handle_post_message(scope, receive, send)
+        return Response()
 
     app = Starlette(
         routes=[
             Route("/sse", endpoint=handle_sse),
-            Route("/messages", endpoint=handle_messages, methods=["POST"]),
+            Mount("/messages", app=sse.handle_post_message),
         ]
     )
 
