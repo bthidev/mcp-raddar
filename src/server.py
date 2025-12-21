@@ -1,10 +1,12 @@
 """Main MCP server for Sonarr and Radarr integration."""
 
-import asyncio
 import logging
 from mcp.server import Server
-from mcp.server.stdio import stdio_server
+from mcp.server.sse import SseServerTransport
 from mcp.types import Tool, TextContent
+from starlette.applications import Starlette
+from starlette.routing import Route
+import uvicorn
 
 from .config import load_config, setup_logging
 from .tools.sonarr_tools import SonarrTools
@@ -320,13 +322,34 @@ async def main():
             error_message = f"Error executing {name}: {str(e)}"
             return [TextContent(type="text", text=error_message)]
 
+    # Create SSE transport
+    sse = SseServerTransport("/messages")
+
+    # Create Starlette app
+    async def handle_sse(request):
+        async with sse.connect_sse(
+            request.scope, request.receive, request._send
+        ) as streams:
+            await server.run(
+                streams[0], streams[1], server.create_initialization_options()
+            )
+
+    async def handle_messages(request):
+        await sse.handle_post_message(request.scope, request.receive, request._send)
+
+    app = Starlette(
+        routes=[
+            Route("/sse", endpoint=handle_sse),
+            Route("/messages", endpoint=handle_messages, methods=["POST"]),
+        ]
+    )
+
     # Run the server
-    logger.info("MCP server ready. Waiting for connections...")
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream, write_stream, server.create_initialization_options()
-        )
+    logger.info(
+        f"MCP server ready. Listening on http://{config.mcp_hostname}:{config.mcp_port}"
+    )
+    uvicorn.run(app, host=config.mcp_hostname, port=config.mcp_port)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

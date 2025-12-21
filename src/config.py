@@ -46,6 +46,8 @@ class Config(BaseModel):
     request_timeout: int = Field(default=30, ge=1, le=300)
     request_max_retries: int = Field(default=3, ge=0, le=10)
     request_backoff_factor: float = Field(default=0.5, ge=0.1, le=5.0)
+    mcp_port: int = Field(default=8000, ge=1, le=65535)
+    mcp_hostname: str = Field(default="0.0.0.0")
 
     @field_validator("log_level")
     @classmethod
@@ -147,6 +149,8 @@ def load_config() -> Config:
         request_timeout=int(os.getenv("REQUEST_TIMEOUT", "30")),
         request_max_retries=int(os.getenv("REQUEST_MAX_RETRIES", "3")),
         request_backoff_factor=float(os.getenv("REQUEST_BACKOFF_FACTOR", "0.5")),
+        mcp_port=int(os.getenv("MCP_PORT", "8000")),
+        mcp_hostname=os.getenv("MCP_HOSTNAME", "0.0.0.0"),
     )
 
     logger.info(

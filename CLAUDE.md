@@ -20,12 +20,13 @@ cp .env.example .env
 
 ### Running the Server
 ```bash
-# Local development (STDIO mode)
+# Local development (HTTP/SSE mode)
 uv run python -m src.server
 
 # With Docker Compose
 docker-compose up -d
 docker-compose logs -f mcp-raddar
+# Access at http://localhost:8000/sse
 ```
 
 ### Code Quality (Not Yet Configured)
@@ -74,11 +75,14 @@ Multi-instance configuration through environment variables with dynamic discover
 
 ### MCP Server (`src/server.py`)
 
-- Uses `mcp.server.Server` with STDIO transport
+- Uses `mcp.server.Server` with SSE (Server-Sent Events) transport over HTTP
+- Built with Starlette web framework and Uvicorn ASGI server
+- Exposes two endpoints: `/sse` (SSE connection) and `/messages` (POST requests)
 - Registers 8 tools (4 Sonarr + 4 Radarr)
 - Tool registration happens in `@server.list_tools()` decorator
 - Tool execution in `@server.call_tool()` decorator
 - Loads config once on startup, creates all client instances
+- Configurable via `MCP_PORT` (default: 8000) and `MCP_HOSTNAME` (default: 0.0.0.0)
 
 ### Request Flow Example
 
@@ -134,6 +138,8 @@ This two-step process is required because Sonarr/Radarr need full series/movie o
 # Server config
 MCP_SERVER_NAME=mcp-raddar
 MCP_LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+MCP_PORT=8000  # HTTP server port
+MCP_HOSTNAME=0.0.0.0  # HTTP server hostname
 
 # Multi-instance format (N = 1, 2, 3...)
 SONARR_URL_1=http://sonarr:8989
@@ -149,9 +155,11 @@ REQUEST_BACKOFF_FACTOR=0.5
 
 ## n8n Integration
 
-Server runs in STDIO mode by default. For n8n:
-- Use `mcp-remote` to bridge STDIO → SSE
-- OR modify server to support SSE directly (requires changes to `server.py`)
+Server runs in SSE (HTTP streamable) mode, making it directly compatible with n8n and other HTTP clients:
+- Connect to `http://localhost:8000/sse` for SSE endpoint
+- POST messages to `http://localhost:8000/messages`
+- Configure port and hostname via `MCP_PORT` and `MCP_HOSTNAME` environment variables
+- No need for `mcp-remote` or additional bridging
 
 ## Testing Notes
 
