@@ -325,17 +325,15 @@ def main():
     # Create SSE transport
     sse = SseServerTransport("/messages")
 
-    # Create Starlette app
-    async def handle_sse(request):
-        async with sse.connect_sse(
-            request.scope, request.receive, request._send
-        ) as streams:
+    # Create Starlette app with raw ASGI handlers
+    async def handle_sse(scope, receive, send):
+        async with sse.connect_sse(scope, receive, send) as streams:
             await server.run(
                 streams[0], streams[1], server.create_initialization_options()
             )
 
-    async def handle_messages(request):
-        await sse.handle_post_message(request.scope, request.receive, request._send)
+    async def handle_messages(scope, receive, send):
+        await sse.handle_post_message(scope, receive, send)
 
     app = Starlette(
         routes=[
