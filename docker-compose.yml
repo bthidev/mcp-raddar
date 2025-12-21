@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  mcp-raddar:
+    build: .
+    container_name: mcp-raddar
+    env_file:
+      - .env
+    environment:
+      - MCP_SERVER_NAME=mcp-raddar
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Optional: Mount source for development
+      # - ./src:/app/src:ro
+    networks:
+      - media
+    restart: unless-stopped
+    # For STDIO mode (default)
+    stdin_open: true
+    tty: true
+
+    # Optional: Uncomment for SSE/HTTP mode (n8n compatibility)
+    # ports:
+    #   - "8000:8000"
+    # environment:
+    #   - MCP_PORT=8000
+    #   - MCP_HOSTNAME=0.0.0.0
+
+networks:
+  media:
+    # If you have an existing network with Sonarr/Radarr, use:
+    # external: true
+    # Otherwise, this will create a new network
+    driver: bridge

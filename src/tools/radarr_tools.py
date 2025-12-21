@@ -1,0 +1,240 @@
+"""MCP tools for Radarr operations."""
+
+import logging
+from typing import Dict
+from ..config import Config
+from ..clients.radarr import RadarrClient
+from ..clients.base import ArrClientError
+
+logger = logging.getLogger(__name__)
+
+
+class RadarrTools:
+    """MCP tools for Radarr."""
+
+    def __init__(self, config: Config):
+        """Initialize Radarr tools with configuration."""
+        self.config = config
+        self.clients: Dict[int, RadarrClient] = {}
+
+        # Create clients for all configured instances
+        for instance_id, instance_config in config.radarr_instances.items():
+            self.clients[instance_id] = RadarrClient(
+                base_url=instance_config.url,
+                api_key=instance_config.api_key,
+                timeout=config.request_timeout,
+                max_retries=config.request_max_retries,
+                backoff_factor=config.request_backoff_factor,
+            )
+
+    def _get_client(self, instance_id: int = 1) -> RadarrClient:
+        """
+        Get Radarr client for the specified instance.
+
+        Args:
+            instance_id: Instance ID (default: 1)
+
+        Returns:
+            RadarrClient instance
+
+        Raises:
+            ValueError: If instance ID is invalid
+        """
+        if instance_id not in self.clients:
+            available = ", ".join(str(i) for i in sorted(self.clients.keys()))
+            raise ValueError(
+                f"Radarr instance {instance_id} not found. "
+                f"Available instances: {available}"
+            )
+        return self.clients[instance_id]
+
+    async def search_movies(self, query: str, instance_id: int = 1) -> str:
+        """
+        Search for movies by title, TMDB ID, or IMDB ID.
+
+        Args:
+            query: Search term, tmdb:ID, or imdb:ID
+            instance_id: Radarr instance ID (default: 1)
+
+        Returns:
+            JSON string with search results including image URLs
+        """
+        try:
+            client = self._get_client(instance_id)
+            results = client.search_movies(query)
+
+            # Format results for better readability
+            formatted_results = []
+            for movie in results:
+                formatted_movie = {
+                    "title": movie.get("title"),
+                    "year": movie.get("year"),
+                    "tmdbId": movie.get("tmdbId"),
+                    "imdbId": movie.get("imdbId"),
+                    "overview": movie.get("overview"),
+                    "status": movie.get("status"),
+                    "runtime": movie.get("runtime"),
+                    "studio": movie.get("studio"),
+                    "images": movie.get("images", []),
+                }
+                formatted_results.append(formatted_movie)
+
+            import json
+
+            return json.dumps(formatted_results, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in search_movies: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def list_movies(self, instance_id: int = 1) -> str:
+        """
+        List all movies in the Radarr library.
+
+        Args:
+            instance_id: Radarr instance ID (default: 1)
+
+        Returns:
+            JSON string with all movies
+        """
+        try:
+            client = self._get_client(instance_id)
+            movies_list = client.list_movies()
+
+            # Format results
+            formatted_results = []
+            for movie in movies_list:
+                formatted_movie = {
+                    "title": movie.get("title"),
+                    "year": movie.get("year"),
+                    "tmdbId": movie.get("tmdbId"),
+                    "imdbId": movie.get("imdbId"),
+                    "monitored": movie.get("monitored"),
+                    "hasFile": movie.get("hasFile"),
+                    "path": movie.get("path"),
+                    "images": movie.get("images", []),
+                    "sizeOnDisk": movie.get("sizeOnDisk", 0),
+                }
+                formatted_results.append(formatted_movie)
+
+            import json
+
+            return json.dumps(formatted_results, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in list_movies: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def get_history(
+        self, instance_id: int = 1, page: int = 1, page_size: int = 20
+    ) -> str:
+        """
+        Get download and import history.
+
+        Args:
+            instance_id: Radarr instance ID (default: 1)
+            page: Page number (default: 1)
+            page_size: Results per page (default: 20)
+
+        Returns:
+            JSON string with history records
+        """
+        try:
+            client = self._get_client(instance_id)
+            history = client.get_history(page=page, page_size=page_size)
+
+            # Format results
+            records = history.get("records", [])
+            formatted_records = []
+            for record in records:
+                movie_info = record.get("movie", {})
+                formatted_record = {
+                    "eventType": record.get("eventType"),
+                    "date": record.get("date"),
+                    "movie": movie_info.get("title"),
+                    "quality": record.get("quality", {}).get("quality", {}).get("name"),
+                    "sourceTitle": record.get("sourceTitle"),
+                }
+                formatted_records.append(formatted_record)
+
+            result = {
+                "records": formatted_records,
+                "page": history.get("page", 1),
+                "pageSize": history.get("pageSize", page_size),
+                "totalRecords": history.get("totalRecords", 0),
+            }
+
+            import json
+
+            return json.dumps(result, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in get_history: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def add_movie(
+        self,
+        tmdb_id: int,
+        quality_profile_id: int,
+        root_folder_path: str,
+        instance_id: int = 1,
+        monitor: bool = True,
+        search_for_movie: bool = True,
+    ) -> str:
+        """
+        Add a new movie to Radarr.
+
+        Args:
+            tmdb_id: TMDB ID of the movie
+            quality_profile_id: Quality profile ID
+            root_folder_path: Root folder path
+            instance_id: Radarr instance ID (default: 1)
+            monitor: Monitor the movie
+            search_for_movie: Auto-search for the movie
+
+        Returns:
+            JSON string with added movie details
+        """
+        try:
+            client = self._get_client(instance_id)
+            result = client.add_movie(
+                tmdb_id=tmdb_id,
+                quality_profile_id=quality_profile_id,
+                root_folder_path=root_folder_path,
+                monitor=monitor,
+                search_for_movie=search_for_movie,
+            )
+
+            # Format result
+            formatted_result = {
+                "success": True,
+                "title": result.get("title"),
+                "year": result.get("year"),
+                "tmdbId": result.get("tmdbId"),
+                "path": result.get("path"),
+                "monitored": result.get("monitored"),
+                "images": result.get("images", []),
+            }
+
+            import json
+
+            return json.dumps(formatted_result, indent=2)
+
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            return f"Validation error: {str(e)}"
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in add_movie: {e}")
+            return f"Unexpected error: {str(e)}"
