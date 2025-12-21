@@ -27,12 +27,12 @@ class SonarrTools:
                 backoff_factor=config.request_backoff_factor,
             )
 
-    def _get_client(self, instance_id: int = 1) -> SonarrClient:
+    def _get_client(self, instance_id: int | None = None) -> SonarrClient:
         """
         Get Sonarr client for the specified instance.
 
         Args:
-            instance_id: Instance ID (default: 1)
+            instance_id: Instance ID (default: first available instance)
 
         Returns:
             SonarrClient instance
@@ -40,6 +40,10 @@ class SonarrTools:
         Raises:
             ValueError: If instance ID is invalid
         """
+        # If no instance_id specified, use the first available
+        if instance_id is None:
+            instance_id = min(self.clients.keys())
+
         if instance_id not in self.clients:
             available = ", ".join(str(i) for i in sorted(self.clients.keys()))
             raise ValueError(
@@ -48,13 +52,13 @@ class SonarrTools:
             )
         return self.clients[instance_id]
 
-    async def search_series(self, query: str, instance_id: int = 1) -> str:
+    async def search_series(self, query: str, instance_id: int | None = None) -> str:
         """
         Search for TV series by name or TVDB ID.
 
         Args:
             query: Search term or tvdb:ID
-            instance_id: Sonarr instance ID (default: 1)
+            instance_id: Sonarr instance ID (default: first available)
 
         Returns:
             JSON string with search results including image URLs
@@ -89,12 +93,12 @@ class SonarrTools:
             logger.error(f"Unexpected error in search_series: {e}")
             return f"Unexpected error: {str(e)}"
 
-    async def list_series(self, instance_id: int = 1) -> str:
+    async def list_series(self, instance_id: int | None = None) -> str:
         """
         List all series in the Sonarr library.
 
         Args:
-            instance_id: Sonarr instance ID (default: 1)
+            instance_id: Sonarr instance ID (default: first available)
 
         Returns:
             JSON string with all series
@@ -135,13 +139,13 @@ class SonarrTools:
             return f"Unexpected error: {str(e)}"
 
     async def get_history(
-        self, instance_id: int = 1, page: int = 1, page_size: int = 20
+        self, instance_id: int | None = None, page: int = 1, page_size: int = 20
     ) -> str:
         """
         Get download and import history.
 
         Args:
-            instance_id: Sonarr instance ID (default: 1)
+            instance_id: Sonarr instance ID (default: first available)
             page: Page number (default: 1)
             page_size: Results per page (default: 20)
 
@@ -191,7 +195,7 @@ class SonarrTools:
         tvdb_id: int,
         quality_profile_id: int,
         root_folder_path: str,
-        instance_id: int = 1,
+        instance_id: int | None = None,
         monitor: str = "all",
         search_for_missing: bool = True,
     ) -> str:
@@ -202,7 +206,7 @@ class SonarrTools:
             tvdb_id: TVDB ID of the series
             quality_profile_id: Quality profile ID
             root_folder_path: Root folder path
-            instance_id: Sonarr instance ID (default: 1)
+            instance_id: Sonarr instance ID (default: first available)
             monitor: Monitoring option (all, future, missing, existing, none)
             search_for_missing: Auto-search for missing episodes
 
