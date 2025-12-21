@@ -15,7 +15,7 @@ from .tools.radarr_tools import RadarrTools
 logger = logging.getLogger(__name__)
 
 
-async def main():
+def main():
     """Main entry point for the MCP server."""
     # Load configuration
     try:
