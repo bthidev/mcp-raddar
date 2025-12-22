@@ -260,11 +260,13 @@ class RadarrTools:
             # Format results
             formatted_profiles = []
             for profile in profiles:
+                cutoff = profile.get("cutoff")
+                cutoff_name = cutoff.get("name") if isinstance(cutoff, dict) else cutoff
                 formatted_profiles.append({
                     "id": profile.get("id"),
                     "name": profile.get("name"),
                     "upgradeAllowed": profile.get("upgradeAllowed"),
-                    "cutoff": profile.get("cutoff", {}).get("name"),
+                    "cutoff": cutoff_name,
                 })
 
             import json
