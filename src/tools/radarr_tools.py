@@ -242,3 +242,207 @@ class RadarrTools:
         except Exception as e:
             logger.error(f"Unexpected error in add_movie: {e}")
             return f"Unexpected error: {str(e)}"
+
+    async def get_quality_profiles(self, instance_id: int | None = None) -> str:
+        """
+        Get available quality profiles.
+
+        Args:
+            instance_id: Radarr instance ID (default: first available)
+
+        Returns:
+            JSON string with quality profiles
+        """
+        try:
+            client = self._get_client(instance_id)
+            profiles = client.get_quality_profiles()
+
+            # Format results
+            formatted_profiles = []
+            for profile in profiles:
+                formatted_profiles.append({
+                    "id": profile.get("id"),
+                    "name": profile.get("name"),
+                    "upgradeAllowed": profile.get("upgradeAllowed"),
+                    "cutoff": profile.get("cutoff", {}).get("name"),
+                })
+
+            import json
+            return json.dumps(formatted_profiles, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in get_quality_profiles: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def get_root_folders(self, instance_id: int | None = None) -> str:
+        """
+        Get configured root folders.
+
+        Args:
+            instance_id: Radarr instance ID (default: first available)
+
+        Returns:
+            JSON string with root folders
+        """
+        try:
+            client = self._get_client(instance_id)
+            folders = client.get_root_folders()
+
+            # Format results
+            formatted_folders = []
+            for folder in folders:
+                formatted_folders.append({
+                    "id": folder.get("id"),
+                    "path": folder.get("path"),
+                    "accessible": folder.get("accessible"),
+                    "freeSpace": folder.get("freeSpace"),
+                    "totalSpace": folder.get("totalSpace"),
+                })
+
+            import json
+            return json.dumps(formatted_folders, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in get_root_folders: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def get_queue(
+        self, instance_id: int | None = None, page: int = 1, page_size: int = 20
+    ) -> str:
+        """
+        Get the download queue.
+
+        Args:
+            instance_id: Radarr instance ID (default: first available)
+            page: Page number (default: 1)
+            page_size: Results per page (default: 20)
+
+        Returns:
+            JSON string with queue items
+        """
+        try:
+            client = self._get_client(instance_id)
+            queue = client.get_queue(page=page, page_size=page_size)
+
+            # Format results
+            records = queue.get("records", [])
+            formatted_records = []
+            for record in records:
+                movie_info = record.get("movie", {})
+                formatted_record = {
+                    "title": record.get("title"),
+                    "status": record.get("status"),
+                    "size": record.get("size"),
+                    "sizeleft": record.get("sizeleft"),
+                    "timeleft": record.get("timeleft"),
+                    "estimatedCompletionTime": record.get("estimatedCompletionTime"),
+                    "protocol": record.get("protocol"),
+                    "downloadClient": record.get("downloadClient"),
+                    "movie": movie_info.get("title"),
+                }
+                formatted_records.append(formatted_record)
+
+            result = {
+                "records": formatted_records,
+                "page": queue.get("page", 1),
+                "pageSize": queue.get("pageSize", page_size),
+                "totalRecords": queue.get("totalRecords", 0),
+            }
+
+            import json
+            return json.dumps(result, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in get_queue: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def get_calendar(
+        self, instance_id: int | None = None, start_date: str | None = None, end_date: str | None = None
+    ) -> str:
+        """
+        Get upcoming movie releases from the calendar.
+
+        Args:
+            instance_id: Radarr instance ID (default: first available)
+            start_date: Start date in YYYY-MM-DD format (default: today)
+            end_date: End date in YYYY-MM-DD format (default: today + 30 days)
+
+        Returns:
+            JSON string with upcoming movie releases
+        """
+        try:
+            client = self._get_client(instance_id)
+            calendar = client.get_calendar(start_date=start_date, end_date=end_date)
+
+            # Format results
+            formatted_movies = []
+            for movie in calendar:
+                formatted_movie = {
+                    "title": movie.get("title"),
+                    "year": movie.get("year"),
+                    "physicalRelease": movie.get("physicalRelease"),
+                    "digitalRelease": movie.get("digitalRelease"),
+                    "inCinemas": movie.get("inCinemas"),
+                    "tmdbId": movie.get("tmdbId"),
+                    "hasFile": movie.get("hasFile"),
+                    "monitored": movie.get("monitored"),
+                }
+                formatted_movies.append(formatted_movie)
+
+            import json
+            return json.dumps(formatted_movies, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in get_calendar: {e}")
+            return f"Unexpected error: {str(e)}"
+
+    async def get_system_status(self, instance_id: int | None = None) -> str:
+        """
+        Get system status and information.
+
+        Args:
+            instance_id: Radarr instance ID (default: first available)
+
+        Returns:
+            JSON string with system information
+        """
+        try:
+            client = self._get_client(instance_id)
+            status = client.get_system_status()
+
+            # Format key information
+            formatted_status = {
+                "version": status.get("version"),
+                "buildTime": status.get("buildTime"),
+                "osName": status.get("osName"),
+                "osVersion": status.get("osVersion"),
+                "isLinux": status.get("isLinux"),
+                "isOsx": status.get("isOsx"),
+                "isWindows": status.get("isWindows"),
+                "branch": status.get("branch"),
+                "authentication": status.get("authentication"),
+                "startupPath": status.get("startupPath"),
+                "appData": status.get("appData"),
+            }
+
+            import json
+            return json.dumps(formatted_status, indent=2)
+
+        except ArrClientError as e:
+            logger.error(f"Radarr API error: {e}")
+            return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error in get_system_status: {e}")
+            return f"Unexpected error: {str(e)}"

@@ -14,19 +14,33 @@ A Model Context Protocol (MCP) server for integrating with Sonarr and Radarr API
 
 ## Available Tools
 
-### Sonarr Tools
+**18 MCP Tools** for comprehensive media management (9 Sonarr + 9 Radarr)
+
+### Sonarr Tools (9)
 
 1. **sonarr_search_series** - Search for TV series by name or TVDB ID
 2. **sonarr_list_series** - List all series in your library
 3. **sonarr_get_history** - Get download and import history
 4. **sonarr_add_series** - Add a new TV series
+5. **sonarr_get_quality_profiles** - Get available quality profiles
+6. **sonarr_get_root_folders** - Get configured root folders
+7. **sonarr_get_queue** - Monitor current downloads
+8. **sonarr_get_calendar** - Get upcoming episodes
+9. **sonarr_get_system_status** - Get system information
 
-### Radarr Tools
+### Radarr Tools (9)
 
-5. **radarr_search_movies** - Search for movies by title, TMDB ID, or IMDB ID
-6. **radarr_list_movies** - List all movies in your library
-7. **radarr_get_history** - Get download and import history
-8. **radarr_add_movie** - Add a new movie
+1. **radarr_search_movies** - Search for movies by title, TMDB ID, or IMDB ID
+2. **radarr_list_movies** - List all movies in your library
+3. **radarr_get_history** - Get download and import history
+4. **radarr_add_movie** - Add a new movie
+5. **radarr_get_quality_profiles** - Get available quality profiles
+6. **radarr_get_root_folders** - Get configured root folders
+7. **radarr_get_queue** - Monitor current downloads
+8. **radarr_get_calendar** - Get upcoming movie releases
+9. **radarr_get_system_status** - Get system information
+
+> 📖 For detailed tool documentation and examples, see [NEW_TOOLS.md](NEW_TOOLS.md)
 
 ## Prerequisites
 
@@ -390,12 +404,15 @@ Automatically runs on pull requests and pushes to main/master:
 
 Automatically builds and publishes Docker images when version tags are pushed:
 
-**Trigger**: Push tags matching `v*.*.*` (e.g., `v0.1.0`, `v1.2.3`)
+**Trigger**: Push tags matching `v*.*.*` (e.g., `v1.0.0`, `v1.2.3`)
 
 **Features**:
 - Multi-platform builds (linux/amd64, linux/arm64)
-- Automatic tagging with version, major.minor, major, and latest
+- Automatic tagging with semantic versioning
 - GitHub Actions cache for faster builds
+- **Automatic Docker Hub description updates** from `DOCKER_HUB_README.md`
+- **Automatic CHANGELOG.md generation** from git commit history
+- Commits changelog back to repository
 
 **Required GitHub Secrets**:
 1. `DOCKERHUB_USERNAME` - Your Docker Hub username
@@ -403,13 +420,23 @@ Automatically builds and publishes Docker images when version tags are pushed:
 
 **Published to**: `${DOCKERHUB_USERNAME}/mcp-raddar`
 
+**What Gets Created**:
+- Docker images with tags: `1.0.0`, `1.0`, `latest`
+- Updated Docker Hub repository description
+- CHANGELOG.md entry with all commits since previous release
+
 **Example release**:
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+# Create a version tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# Wait 5-10 minutes for pipeline to complete
+# Then pull the auto-generated changelog
+git pull origin master
 ```
 
-This will build and push images with tags: `0.1.0`, `0.1`, `0`, `latest`
+**Setup Guide**: See [CICD_SETUP.md](CICD_SETUP.md) for detailed setup instructions.
 
 ## License
 

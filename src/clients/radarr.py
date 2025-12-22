@@ -231,3 +231,115 @@ class RadarrClient(BaseArrClient):
             List of root folders with path and freeSpace
         """
         return self.get("/api/v3/rootfolder")
+
+    def get_queue(self, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
+        """
+        Get the download queue.
+
+        Args:
+            page: Page number (1-indexed)
+            page_size: Number of results per page
+
+        Returns:
+            Dictionary with 'records' (list) and pagination info
+
+        Example response includes:
+            - records: List of queue items
+                - title
+                - status (downloading, queued, paused, etc.)
+                - size
+                - sizeleft
+                - timeleft
+                - estimatedCompletionTime
+                - protocol (torrent, usenet)
+                - downloadClient
+                - movie (title, tmdbId)
+            - page
+            - pageSize
+            - totalRecords
+        """
+        logger.info(f"Fetching queue: page={page}, page_size={page_size}")
+
+        queue = self.get(
+            "/api/v3/queue",
+            params={
+                "page": page,
+                "pageSize": page_size,
+                "includeUnknownMovieItems": False,
+            },
+        )
+
+        return (
+            queue
+            if queue
+            else {"records": [], "page": 1, "pageSize": page_size, "totalRecords": 0}
+        )
+
+    def get_calendar(
+        self, start_date: Optional[str] = None, end_date: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get upcoming movie releases from the calendar.
+
+        Args:
+            start_date: Start date in ISO format (YYYY-MM-DD). Defaults to today.
+            end_date: End date in ISO format (YYYY-MM-DD). Defaults to today + 30 days.
+
+        Returns:
+            List of upcoming movie releases
+
+        Example response includes:
+            - title
+            - physicalRelease
+            - digitalRelease
+            - inCinemas
+            - tmdbId
+            - imdbId
+            - hasFile (bool)
+            - monitored (bool)
+        """
+        logger.info(f"Fetching calendar: start={start_date}, end={end_date}")
+
+        params = {}
+        if start_date:
+            params["start"] = start_date
+        if end_date:
+            params["end"] = end_date
+
+        calendar = self.get("/api/v3/calendar", params=params)
+
+        return calendar if isinstance(calendar, list) else []
+
+    def get_system_status(self) -> Dict[str, Any]:
+        """
+        Get system status and information.
+
+        Returns:
+            Dictionary with system information
+
+        Example response includes:
+            - version
+            - buildTime
+            - isDebug
+            - isProduction
+            - isAdmin
+            - isUserInteractive
+            - startupPath
+            - appData
+            - osName
+            - osVersion
+            - isMonoRuntime
+            - isMono
+            - isLinux
+            - isOsx
+            - isWindows
+            - branch
+            - authentication
+            - sqliteVersion
+            - urlBase
+            - runtimeVersion
+            - runtimeName
+        """
+        logger.info("Fetching system status")
+
+        return self.get("/api/v3/system/status")

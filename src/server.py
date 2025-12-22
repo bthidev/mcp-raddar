@@ -159,6 +159,101 @@ def main():
                 )
             )
 
+            # Get quality profiles tool
+            quality_profiles_props = {}
+            _add_instance_param(quality_profiles_props, multiple_sonarr, "Sonarr")
+
+            tools.append(
+                Tool(
+                    name="sonarr_get_quality_profiles",
+                    description="Get available quality profiles from Sonarr. Use this to find quality profile IDs for adding series.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": quality_profiles_props,
+                    },
+                )
+            )
+
+            # Get root folders tool
+            root_folders_props = {}
+            _add_instance_param(root_folders_props, multiple_sonarr, "Sonarr")
+
+            tools.append(
+                Tool(
+                    name="sonarr_get_root_folders",
+                    description="Get configured root folders from Sonarr. Use this to find root folder paths for adding series.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": root_folders_props,
+                    },
+                )
+            )
+
+            # Get queue tool
+            queue_props = {
+                "page": {
+                    "type": "integer",
+                    "description": "Page number (default: 1)",
+                    "default": 1,
+                },
+                "page_size": {
+                    "type": "integer",
+                    "description": "Results per page (default: 20)",
+                    "default": 20,
+                },
+            }
+            _add_instance_param(queue_props, multiple_sonarr, "Sonarr")
+
+            tools.append(
+                Tool(
+                    name="sonarr_get_queue",
+                    description="Get the current download queue from Sonarr with pagination.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": queue_props,
+                    },
+                )
+            )
+
+            # Get calendar tool
+            calendar_props = {
+                "start_date": {
+                    "type": "string",
+                    "description": "Start date in YYYY-MM-DD format (default: today)",
+                },
+                "end_date": {
+                    "type": "string",
+                    "description": "End date in YYYY-MM-DD format (default: today + 7 days)",
+                },
+            }
+            _add_instance_param(calendar_props, multiple_sonarr, "Sonarr")
+
+            tools.append(
+                Tool(
+                    name="sonarr_get_calendar",
+                    description="Get upcoming episodes from Sonarr calendar.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": calendar_props,
+                    },
+                )
+            )
+
+            # Get system status tool
+            system_status_props = {}
+            _add_instance_param(system_status_props, multiple_sonarr, "Sonarr")
+
+            tools.append(
+                Tool(
+                    name="sonarr_get_system_status",
+                    description="Get Sonarr system status and information.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": system_status_props,
+                    },
+                )
+            )
+
         # Radarr tools
         if radarr_tools:
             multiple_radarr = len(config.radarr_instances) > 1
@@ -268,6 +363,101 @@ def main():
                 )
             )
 
+            # Get quality profiles tool
+            quality_profiles_radarr_props = {}
+            _add_instance_param(quality_profiles_radarr_props, multiple_radarr, "Radarr")
+
+            tools.append(
+                Tool(
+                    name="radarr_get_quality_profiles",
+                    description="Get available quality profiles from Radarr. Use this to find quality profile IDs for adding movies.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": quality_profiles_radarr_props,
+                    },
+                )
+            )
+
+            # Get root folders tool
+            root_folders_radarr_props = {}
+            _add_instance_param(root_folders_radarr_props, multiple_radarr, "Radarr")
+
+            tools.append(
+                Tool(
+                    name="radarr_get_root_folders",
+                    description="Get configured root folders from Radarr. Use this to find root folder paths for adding movies.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": root_folders_radarr_props,
+                    },
+                )
+            )
+
+            # Get queue tool
+            queue_radarr_props = {
+                "page": {
+                    "type": "integer",
+                    "description": "Page number (default: 1)",
+                    "default": 1,
+                },
+                "page_size": {
+                    "type": "integer",
+                    "description": "Results per page (default: 20)",
+                    "default": 20,
+                },
+            }
+            _add_instance_param(queue_radarr_props, multiple_radarr, "Radarr")
+
+            tools.append(
+                Tool(
+                    name="radarr_get_queue",
+                    description="Get the current download queue from Radarr with pagination.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": queue_radarr_props,
+                    },
+                )
+            )
+
+            # Get calendar tool
+            calendar_radarr_props = {
+                "start_date": {
+                    "type": "string",
+                    "description": "Start date in YYYY-MM-DD format (default: today)",
+                },
+                "end_date": {
+                    "type": "string",
+                    "description": "End date in YYYY-MM-DD format (default: today + 30 days)",
+                },
+            }
+            _add_instance_param(calendar_radarr_props, multiple_radarr, "Radarr")
+
+            tools.append(
+                Tool(
+                    name="radarr_get_calendar",
+                    description="Get upcoming movie releases from Radarr calendar.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": calendar_radarr_props,
+                    },
+                )
+            )
+
+            # Get system status tool
+            system_status_radarr_props = {}
+            _add_instance_param(system_status_radarr_props, multiple_radarr, "Radarr")
+
+            tools.append(
+                Tool(
+                    name="radarr_get_system_status",
+                    description="Get Radarr system status and information.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": system_status_radarr_props,
+                    },
+                )
+            )
+
         return tools
 
     # Register call tool handler
@@ -304,6 +494,30 @@ def main():
                     monitor=arguments.get("monitor", "all"),
                     search_for_missing=arguments.get("search_for_missing", True),
                 )
+            elif name == "sonarr_get_quality_profiles" and sonarr_tools:
+                result = await sonarr_tools.get_quality_profiles(
+                    instance_id=arguments.get("instance_id")
+                )
+            elif name == "sonarr_get_root_folders" and sonarr_tools:
+                result = await sonarr_tools.get_root_folders(
+                    instance_id=arguments.get("instance_id")
+                )
+            elif name == "sonarr_get_queue" and sonarr_tools:
+                result = await sonarr_tools.get_queue(
+                    instance_id=arguments.get("instance_id"),
+                    page=arguments.get("page", 1),
+                    page_size=arguments.get("page_size", 20),
+                )
+            elif name == "sonarr_get_calendar" and sonarr_tools:
+                result = await sonarr_tools.get_calendar(
+                    instance_id=arguments.get("instance_id"),
+                    start_date=arguments.get("start_date"),
+                    end_date=arguments.get("end_date"),
+                )
+            elif name == "sonarr_get_system_status" and sonarr_tools:
+                result = await sonarr_tools.get_system_status(
+                    instance_id=arguments.get("instance_id")
+                )
 
             # Radarr tools
             elif name == "radarr_search_movies" and radarr_tools:
@@ -329,6 +543,30 @@ def main():
                     instance_id=arguments.get("instance_id"),
                     monitor=arguments.get("monitor", True),
                     search_for_movie=arguments.get("search_for_movie", True),
+                )
+            elif name == "radarr_get_quality_profiles" and radarr_tools:
+                result = await radarr_tools.get_quality_profiles(
+                    instance_id=arguments.get("instance_id")
+                )
+            elif name == "radarr_get_root_folders" and radarr_tools:
+                result = await radarr_tools.get_root_folders(
+                    instance_id=arguments.get("instance_id")
+                )
+            elif name == "radarr_get_queue" and radarr_tools:
+                result = await radarr_tools.get_queue(
+                    instance_id=arguments.get("instance_id"),
+                    page=arguments.get("page", 1),
+                    page_size=arguments.get("page_size", 20),
+                )
+            elif name == "radarr_get_calendar" and radarr_tools:
+                result = await radarr_tools.get_calendar(
+                    instance_id=arguments.get("instance_id"),
+                    start_date=arguments.get("start_date"),
+                    end_date=arguments.get("end_date"),
+                )
+            elif name == "radarr_get_system_status" and radarr_tools:
+                result = await radarr_tools.get_system_status(
+                    instance_id=arguments.get("instance_id")
                 )
 
             else:
