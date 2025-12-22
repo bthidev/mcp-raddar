@@ -592,14 +592,10 @@ def main():
             )
         return Response()
 
-    async def handle_post_message(request):
-        """Handle POST messages without redirect."""
-        return await sse.handle_post_message(request)
-
     app = Starlette(
         routes=[
             Route("/sse", endpoint=handle_sse),
-            Route("/messages", endpoint=handle_post_message, methods=["POST"]),
+            Mount("/messages", app=sse.handle_post_message),
         ]
     )
 
