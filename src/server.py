@@ -3,6 +3,7 @@
 import logging
 import contextlib
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.routing import Mount
 import uvicorn
@@ -240,10 +241,17 @@ def main():
         return
 
     # Initialize FastMCP server with Streamable HTTP support
+    # Disable DNS rebinding protection for local Docker development
+    # Security is already handled by Docker networking
+    transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=False
+    )
+
     mcp = FastMCP(
         config.server_name,
-        json_response=True,    # Return JSON instead of SSE for simple requests
-        stateless_http=True    # Enable stateless mode for scalability
+        json_response=True,         # Return JSON instead of SSE for simple requests
+        stateless_http=True,        # Enable stateless mode for scalability
+        transport_security=transport_security  # Configure host/origin validation
     )
 
     # Initialize tools
