@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MCP Raddar is a Model Context Protocol (MCP) server that provides a unified interface for managing Sonarr (TV series) and Radarr (movies) through 8 MCP tools. Built with Python 3.14+ and the uv package manager, it supports multiple instances of each service and runs in Docker.
+MCP Raddar is a Model Context Protocol (MCP) server that provides a unified interface for managing Sonarr (TV series) and Radarr (movies) through 18 MCP tools. Built with Python 3.14+ and the uv package manager, it supports multiple instances of each service and runs in Docker.
 
 ## Development Commands
 
@@ -20,13 +20,13 @@ cp .env.example .env
 
 ### Running the Server
 ```bash
-# Local development (HTTP/SSE mode)
+# Local development (Streamable HTTP mode)
 uv run python -m src.server
 
 # With Docker Compose
 docker-compose up -d
 docker-compose logs -f mcp-raddar
-# Access at http://localhost:8000/sse
+# Access at http://localhost:8000/mcp
 ```
 
 ### Code Quality (Not Yet Configured)
@@ -75,14 +75,16 @@ Multi-instance configuration through environment variables with dynamic discover
 
 ### MCP Server (`src/server.py`)
 
-- Uses `mcp.server.Server` with SSE (Server-Sent Events) transport over HTTP
+- Uses `FastMCP` with Streamable HTTP transport (protocol version 2025-03-26+)
 - Built with Starlette web framework and Uvicorn ASGI server
-- Exposes two endpoints: `/sse` (SSE connection) and `/messages` (POST requests)
-- Registers 8 tools (4 Sonarr + 4 Radarr)
-- Tool registration happens in `@server.list_tools()` decorator
-- Tool execution in `@server.call_tool()` decorator
+- Exposes single unified endpoint: `/mcp` (handles both GET and POST)
+- Registers 18 tools (9 Sonarr + 9 Radarr)
+- Tool registration via helper functions `_register_sonarr_tools()` and `_register_radarr_tools()`
+- Tools use `@mcp.tool()` decorator with type hints for schema generation
+- Session management via lifespan context manager
 - Loads config once on startup, creates all client instances
 - Configurable via `MCP_PORT` (default: 8000) and `MCP_HOSTNAME` (default: 0.0.0.0)
+- Supports stateless mode (`stateless_http=True`) and JSON responses (`json_response=True`)
 
 ### Request Flow Example
 
@@ -101,6 +103,57 @@ MCP Client → server.py (call_tool)
 - Tools accept `instance_id` parameter (defaults to 1)
 - Config discovery scans from 1-100, stops at first gap
 - Each tool method validates `instance_id` exists before use
+
+### Instance ID Parameter Behavior
+
+**Dynamic Parameter Visibility** (Updated Dec 22):
+- Tools automatically hide `instance_id` parameter when only one instance is configured
+- Multi-instance setups show the parameter with default value of 1
+- `_get_client()` methods accept `None` and auto-select first available instance
+
+**Implementation Details**:
+- Configuration scans for numbered env vars: `{SERVICE}_URL_{N}`, `{SERVICE}_API_KEY_{N}`
+- Scans from 1-100, stops at first gap
+- Both URL and API key must be present, or configuration fails
+- Each tool method validates `instance_id` exists before use
+
+**Example Behavior**:
+
+Single instance configuration:
+```python
+# .env
+SONARR_URL_1=http://sonarr:8989
+SONARR_API_KEY_1=abc123
+
+# Tool schema - instance_id hidden
+{
+  "name": "sonarr_search_series",
+  "parameters": {
+    "query": "Breaking Bad"  # No instance_id parameter
+  }
+}
+```
+
+Multi-instance configuration:
+```python
+# .env
+SONARR_URL_1=http://sonarr:8989
+SONARR_API_KEY_1=abc123
+SONARR_URL_2=http://sonarr-4k:8989
+SONARR_API_KEY_2=def456
+
+# Tool schema - instance_id visible
+{
+  "name": "sonarr_search_series",
+  "parameters": {
+    "query": "Breaking Bad",
+    "instance_id": 1  # Now visible with default
+  }
+}
+```
+
+**Migration Impact**:
+With FastMCP, `instance_id` is always present in tool schemas (minor UX regression from dynamic behavior, but simpler and clearer).
 
 ### Image URL Transformation
 **Critical feature**: All image URLs must be absolute for n8n/external use.
@@ -155,11 +208,15 @@ REQUEST_BACKOFF_FACTOR=0.5
 
 ## n8n Integration
 
-Server runs in SSE (HTTP streamable) mode, making it directly compatible with n8n and other HTTP clients:
-- Connect to `http://localhost:8000/sse` for SSE endpoint
-- POST messages to `http://localhost:8000/messages`
+Server runs in Streamable HTTP mode (MCP 2025-03-26+), making it directly compatible with n8n and other MCP clients:
+- Connect to `http://localhost:8000/mcp` for unified MCP endpoint
+- Single endpoint handles all MCP communication (no separate GET/POST endpoints)
+- Returns JSON responses for quick operations (stateless_http=True, json_response=True)
+- Includes session management via `MCP-Session-Id` header
+- Protocol version support: 2025-03-26, 2025-06-18, 2025-11-25, draft
 - Configure port and hostname via `MCP_PORT` and `MCP_HOSTNAME` environment variables
 - No need for `mcp-remote` or additional bridging
+- Stateless mode enabled by default for scalability
 
 ## Testing Notes
 

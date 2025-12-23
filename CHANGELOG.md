@@ -28,10 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `INSTANCE_ID_CHANGES.md` - Documentation of instance_id parameter improvements
 
 ### Changed
-- **Breaking**: Fixed SSE endpoint handlers to use raw ASGI signatures
-  - Changed from `async def handle_sse(request)` to `async def handle_sse(scope, receive, send)`
-  - Added `Response()` return to SSE handler to prevent TypeError
-  - Changed `/messages` endpoint from `Route` to `Mount` for proper ASGI app handling
+- **Breaking**: Migrated from SSE transport to Streamable HTTP (MCP 2025-03-26+)
+  - Replaced `mcp.server.Server` with `mcp.server.fastmcp.FastMCP`
+  - Single unified `/mcp` endpoint (replaces separate `/sse` GET and `/messages` POST endpoints)
+  - Removed `sse-starlette` dependency (no longer needed)
+  - Updated to modern MCP protocol with session management via `MCP-Session-Id` header
+  - Enabled stateless HTTP mode with JSON responses for better scalability
+  - Tool registration changed from decorators on closure functions to `@mcp.tool()` decorators
+  - Test client updated from `sse_client` to `streamable_http_client`
+  - All documentation updated (CLAUDE.md, N8N_INTEGRATION.md, N8N_QUICKSTART.md, README.md)
+- **Deprecated**: Previous SSE-related fixes are no longer applicable after migration to Streamable HTTP
+  - SSE transport was deprecated and replaced with FastMCP Streamable HTTP
+  - See "Migrated from SSE transport to Streamable HTTP" above for current implementation
 - **Improved**: Instance ID parameter is now automatically hidden when only one instance is configured
   - Tools only show `instance_id` parameter when multiple instances exist
   - Single-instance setups get cleaner, simpler tool schemas
@@ -43,8 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `latest` tag for default branch
 
 ### Fixed
-- SSE endpoint returning `None` instead of proper response (TypeError: 'NoneType' object is not callable)
-- `/messages` endpoint 307 redirect issue by using `Mount` instead of `Route`
+- **Deprecated**: SSE endpoint returning `None` instead of proper response (fixed before migration to Streamable HTTP)
+- **Deprecated**: `/messages` endpoint 307 redirect issue (fixed before migration to Streamable HTTP)
 - Instance ID parameter handling - now properly passes `None` when not provided
 
 ### Technical
@@ -64,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - MCP server for Sonarr and Radarr integration
-- HTTP/SSE transport for n8n and web client compatibility
+- HTTP transport with Streamable HTTP for n8n and web client compatibility
 - **8 Initial MCP Tools**:
   - `sonarr_search_series` - Search for TV series by name or TVDB ID
   - `sonarr_list_series` - List all series in library

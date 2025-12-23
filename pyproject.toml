@@ -10,7 +10,6 @@ dependencies = [
     "requests>=2.32.3",
     "urllib3>=2.2.3",
     "starlette>=0.45.0",
-    "sse-starlette>=2.2.0",
     "uvicorn>=0.34.0",
 ]
 

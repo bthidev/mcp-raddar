@@ -9,7 +9,7 @@ Perfect for integrating your media automation with AI assistants, n8n workflows,
 - 🎬 **9 Sonarr Tools** - Search, add, monitor TV series
 - 🎥 **9 Radarr Tools** - Search, add, monitor movies
 - 🔄 **Multi-instance Support** - Manage multiple Sonarr/Radarr instances
-- 📡 **HTTP/SSE Transport** - Works with n8n and web clients
+- 📡 **Streamable HTTP Transport** - Modern MCP protocol (2025-03-26+) for n8n and web clients
 - 🖼️ **Image URL Transformation** - Absolute URLs for external use
 - ⚡ **Built-in Retry Logic** - Robust error handling
 
@@ -53,10 +53,12 @@ docker run -d \
 ### 4. Test the Connection
 
 ```bash
-curl http://localhost:8000/sse
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
 ```
 
-You should see an SSE connection establish with a session ID.
+You should see a JSON response with server capabilities and protocol information.
 
 ## Available Tools
 
@@ -157,8 +159,9 @@ networks:
 
 ## Usage with n8n
 
-1. **Connect to the SSE endpoint:**
-   - URL: `http://mcp-raddar:8000/sse`
+1. **Configure MCP Client Tool:**
+   - **Endpoint URL**: `http://mcp-raddar:8000/mcp`
+   - **Server Transport**: `streamable-http`
 
 2. **Use MCP tools in your workflows:**
    ```json
@@ -233,16 +236,20 @@ curl -X POST http://localhost:8000/messages?session_id=SESSION_ID \
 
 ## Endpoints
 
-- **SSE Connection**: `GET /sse` - Establish SSE connection, receive session ID
-- **Messages**: `POST /messages?session_id=SESSION_ID` - Send MCP messages
+- **MCP Endpoint**: `POST /mcp` - Unified endpoint for all MCP communication
+- **Protocol**: Streamable HTTP (MCP 2025-03-26+)
+- **Session Management**: Handled via `MCP-Session-Id` header
 
 ## Health Check
 
 ```bash
-# Check if server is running
-curl http://localhost:8000/sse
+# Check if server is running (via Docker healthcheck)
+docker ps | grep mcp-raddar
 
-# Should return SSE connection with session endpoint
+# Or test MCP initialization
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
 ```
 
 ## Logging
@@ -287,4 +294,4 @@ Built with:
 
 ## Tags
 
-`mcp` `sonarr` `radarr` `media-automation` `ai` `n8n` `model-context-protocol` `api` `integration` `sse` `python`
+`mcp` `sonarr` `radarr` `media-automation` `ai` `n8n` `model-context-protocol` `api` `integration` `streamable-http` `fastmcp` `python`

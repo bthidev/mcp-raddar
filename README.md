@@ -245,33 +245,26 @@ RADARR_API_KEY_1=mno345pqr678
 
 ## n8n Integration
 
-### Option 1: Using mcp-remote (Recommended)
+The server runs in **Streamable HTTP mode** (MCP 2025-03-26+), making it directly compatible with n8n.
 
-1. Install mcp-remote:
+### Setup Steps
+
+1. **Start the MCP server** (via Docker or locally):
 ```bash
-npm install -g @modelcontextprotocol/mcp-remote
+# Via Docker (recommended)
+docker-compose up -d
+
+# Or locally
+uv run python -m src.server
 ```
 
-2. Start the MCP server in STDIO mode (default)
+2. **Configure n8n MCP Client Tool**:
+   - **Endpoint URL**: `http://mcp-raddar:8000/mcp` (Docker network) or `http://localhost:8000/mcp` (local)
+   - **Server Transport**: `streamable-http`
 
-3. Use mcp-remote to bridge to SSE:
-```bash
-mcp-remote --stdio "uv run python -m src.server" --port 8000
-```
+3. **Connect to AI Agent** and start using the 18 available tools
 
-4. Configure n8n to connect to `http://localhost:8000`
-
-### Option 2: Direct SSE Mode
-
-1. Modify `docker-compose.yml` to expose port 8000
-
-2. Set environment variables:
-```bash
-MCP_PORT=8000
-MCP_HOSTNAME=0.0.0.0
-```
-
-3. Configure n8n to connect to your MCP server URL
+For detailed integration instructions, see [N8N_GUIDE.md](./N8N_GUIDE.md).
 
 ## Troubleshooting
 

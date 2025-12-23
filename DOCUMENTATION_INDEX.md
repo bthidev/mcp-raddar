@@ -79,15 +79,22 @@ Quick reference to all documentation files in this repository.
 
 **Read this when**: Learning about the new quality profiles, root folders, queue, calendar, and system status tools.
 
-### [INSTANCE_ID_CHANGES.md](INSTANCE_ID_CHANGES.md)
-**Purpose**: Documentation of instance_id parameter improvements
-**Contents**:
-- What changed with instance_id handling
-- Behavior differences (single vs multi-instance)
-- Implementation details
-- Usage examples
+---
 
-**Read this when**: Understanding why instance_id parameter appears/disappears based on configuration.
+## Integration Documentation
+
+### [N8N_GUIDE.md](N8N_GUIDE.md)
+**Purpose**: Complete n8n integration guide
+**Contents**:
+- Quick start (5 minutes)
+- Connection methods (Docker network, host, remote)
+- MCP Client Tool configuration
+- Available tools (18 tools)
+- Example prompts and workflows
+- Troubleshooting common issues
+- Advanced configuration
+
+**Read this when**: Setting up n8n integration or troubleshooting n8n connectivity.
 
 ---
 
@@ -153,9 +160,10 @@ Quick reference to all documentation files in this repository.
 3. Try: Example workflows in [NEW_TOOLS.md](NEW_TOOLS.md)
 
 ### "I want to use with n8n"
-1. Read: [README.md](README.md) n8n Integration section
-2. Check: [DOCKER_HUB_README.md](DOCKER_HUB_README.md) n8n usage examples
-3. Try: Simple workflows with the new tools
+1. Read: [N8N_GUIDE.md](N8N_GUIDE.md) for complete integration guide
+2. Quick start: Follow the 5-minute setup in N8N_GUIDE.md
+3. Troubleshoot: Use the comprehensive troubleshooting section
+4. Try: Example prompts and workflows with all 18 tools
 
 ### "Something is broken"
 1. Check: [README.md](README.md) Troubleshooting section
@@ -186,12 +194,15 @@ NEW_TOOLS.md (Features)
 ├── Documents: 10 new tools added
 └── Referenced by: README.md
 
-INSTANCE_ID_CHANGES.md (Technical)
-└── Documents: Specific improvement to tool schemas
+N8N_GUIDE.md (Integration)
+├── Consolidates: N8N_QUICKSTART.md + N8N_INTEGRATION.md
+├── Quick start + comprehensive reference
+└── Referenced by: README.md
 
 CLAUDE.md (Developer)
 ├── For: AI assistants and developers
-└── Details: Architecture and patterns
+├── Details: Architecture and patterns
+└── Includes: Instance ID parameter behavior
 ```
 
 ---
