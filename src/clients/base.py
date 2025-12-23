@@ -1,10 +1,13 @@
 """Base HTTP client for Sonarr/Radarr API communication."""
 
 import logging
+import time
 from typing import Any, Dict, Optional
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from ..logging_utils import log_http_call, log_http_response
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +129,11 @@ class BaseArrClient:
         """
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
 
-        logger.debug(f"{method} {url} params={params}")
+        # Log HTTP request at INFO level
+        log_http_call(method, url, params=params, data=json_data)
+
+        # Track request timing
+        start_time = time.time()
 
         try:
             response = self.session.request(
@@ -171,9 +178,13 @@ class BaseArrClient:
                 )
 
             # Parse JSON response
-            if response.text:
-                return response.json()
-            return None
+            response_data = response.json() if response.text else None
+
+            # Calculate duration and log HTTP response at INFO level
+            duration = time.time() - start_time
+            log_http_response(url, response.status_code, response_data, duration)
+
+            return response_data
 
         except requests.exceptions.Timeout as e:
             logger.error(f"Request timeout: {url}")

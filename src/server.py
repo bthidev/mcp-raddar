@@ -11,6 +11,7 @@ import uvicorn
 from .config import load_config, setup_logging
 from .tools.sonarr_tools import SonarrTools
 from .tools.radarr_tools import RadarrTools
+from .logging_utils import log_tool_call
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
     """Register all Sonarr tools with FastMCP."""
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_search_series(query: str, instance_id: int = 1) -> str:
         """Search for TV series by name or TVDB ID. Returns title, year, overview, status, and image URLs.
 
@@ -29,6 +31,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.search_series(query, instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_list_series(instance_id: int = 1) -> str:
         """List all TV series in the Sonarr library with monitoring status and statistics.
 
@@ -38,6 +41,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.list_series(instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_get_history(instance_id: int = 1, page: int = 1, page_size: int = 20) -> str:
         """Get download and import history from Sonarr with pagination.
 
@@ -49,6 +53,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.get_history(instance_id, page, page_size)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_add_series(
         tvdb_id: int,
         quality_profile_id: int,
@@ -73,6 +78,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         )
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_get_quality_profiles(instance_id: int = 1) -> str:
         """Get available quality profiles from Sonarr. Use this to find quality profile IDs for adding series.
 
@@ -82,6 +88,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.get_quality_profiles(instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_get_root_folders(instance_id: int = 1) -> str:
         """Get configured root folders from Sonarr. Use this to find root folder paths for adding series.
 
@@ -91,6 +98,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.get_root_folders(instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_get_queue(instance_id: int = 1, page: int = 1, page_size: int = 20) -> str:
         """Get the current download queue from Sonarr with pagination.
 
@@ -102,6 +110,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.get_queue(instance_id, page, page_size)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_get_calendar(instance_id: int = 1, start_date: str = None, end_date: str = None) -> str:
         """Get upcoming episodes from Sonarr calendar.
 
@@ -113,6 +122,7 @@ def _register_sonarr_tools(mcp: FastMCP, sonarr_tools: SonarrTools):
         return await sonarr_tools.get_calendar(instance_id, start_date, end_date)
 
     @mcp.tool()
+    @log_tool_call
     async def sonarr_get_system_status(instance_id: int = 1) -> str:
         """Get Sonarr system status and information.
 
@@ -126,6 +136,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
     """Register all Radarr tools with FastMCP."""
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_search_movies(query: str, instance_id: int = 1) -> str:
         """Search for movies by title, TMDB ID, or IMDB ID. Returns title, year, overview, and image URLs.
 
@@ -136,6 +147,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.search_movies(query, instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_list_movies(instance_id: int = 1) -> str:
         """List all movies in the Radarr library with monitoring status and file information.
 
@@ -145,6 +157,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.list_movies(instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_get_history(instance_id: int = 1, page: int = 1, page_size: int = 20) -> str:
         """Get download and import history from Radarr with pagination.
 
@@ -156,6 +169,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.get_history(instance_id, page, page_size)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_add_movie(
         tmdb_id: int,
         quality_profile_id: int,
@@ -180,6 +194,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         )
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_get_quality_profiles(instance_id: int = 1) -> str:
         """Get available quality profiles from Radarr. Use this to find quality profile IDs for adding movies.
 
@@ -189,6 +204,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.get_quality_profiles(instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_get_root_folders(instance_id: int = 1) -> str:
         """Get configured root folders from Radarr. Use this to find root folder paths for adding movies.
 
@@ -198,6 +214,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.get_root_folders(instance_id)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_get_queue(instance_id: int = 1, page: int = 1, page_size: int = 20) -> str:
         """Get the current download queue from Radarr with pagination.
 
@@ -209,6 +226,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.get_queue(instance_id, page, page_size)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_get_calendar(instance_id: int = 1, start_date: str = None, end_date: str = None) -> str:
         """Get upcoming movie releases from Radarr calendar.
 
@@ -220,6 +238,7 @@ def _register_radarr_tools(mcp: FastMCP, radarr_tools: RadarrTools):
         return await radarr_tools.get_calendar(instance_id, start_date, end_date)
 
     @mcp.tool()
+    @log_tool_call
     async def radarr_get_system_status(instance_id: int = 1) -> str:
         """Get Radarr system status and information.
 
